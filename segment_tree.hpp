@@ -44,20 +44,15 @@ template<typename T> NVector SegmentTree<T>::real_size(NVector initial_size){
 template<typename T> void SegmentTree<T>::update(NVector position, T val){
     NVector pos=position+SIZE;
     data[pos]=val;
-    update_dim(pos,1);
-    pos[0]/=2;
-    while(pos[0]>0){
-        NVector l=pos,r=pos;
-        l[0]=2*l[0];
-        r[0]=2*r[0]+1;
-        data[pos]=operation(data[l],data[r]);
-        update_dim(pos,1);
-        pos[0]/=2;
-    }
+    update_dim(pos,0);
 }
 
 template<typename T> void SegmentTree<T>::update_dim(NVector pos, int level){
+    if(level<dim-1)
+        update_dim(pos,level+1);
+
     pos[level]/=2;
+
     while(pos[level]>0){
         NVector l=pos,r=pos;
 
@@ -82,7 +77,6 @@ template<typename T> T SegmentTree<T>::get(NVector left_bound, NVector right_bou
 template<typename T> T SegmentTree<T>::get_dim(NVector left, NVector right, int level){
     T ret=zero;
     if(level==dim-1){
-        //std::cout<<"asdf"<<std::endl;
         while(left[level]<=right[level]){
             if(left[level]%2==1){
                 ret=operation(ret,data[left]);
@@ -104,18 +98,16 @@ template<typename T> T SegmentTree<T>::get_dim(NVector left, NVector right, int 
 
     while(left[level]<=right[level]){
         if(left[level]%2==1){
-            NVector new_left=left;
             NVector new_right=right;
-            new_right[level]=new_left[level];
-            ret=operation(ret,get_dim(new_left,new_right,level+1));
+            new_right[level]=left[level];
+            ret=operation(ret,get_dim(left,new_right,level+1));
             left[level]++;
         }
 
         if(right[level]%2==0){
             NVector new_left=left;
-            NVector new_right=right;
-            new_left[level]=new_right[level];
-            ret=operation(ret,get_dim(new_left,new_right,level+1));
+            new_left[level]=right[level];
+            ret=operation(ret,get_dim(new_left,right,level+1));
             right[level]--;
         }
 
