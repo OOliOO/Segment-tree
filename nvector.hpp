@@ -14,6 +14,7 @@ public:
     const int dim;
 
     int& operator [] (int idx){return memory[idx];}
+    void operator = (NVector b);
 
 private:
     int* memory;

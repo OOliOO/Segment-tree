@@ -7,7 +7,7 @@
 
 template<typename T> class SegmentTree{
 public:
-    SegmentTree(NVector size, T (*f)(T,T), T zero_element);
+    SegmentTree(NVector size, T (*f)(T,T), T zero_element, bool sparse=false);
 
     void update(NVector pos, T val);
     T get(NVector left_bound, NVector right_bound);
@@ -16,7 +16,7 @@ public:
 private:
     T (*operation)(T,T);    //must be a valid operation for segment tree...
     NVector SIZE;
-    NArray<T> data;
+    NArray<T>* data;
     T zero;
 
     void update_dim(NVector pos, int level);
@@ -25,8 +25,19 @@ private:
     NVector real_size(NVector initial_size);
 };
 
-template<typename T> SegmentTree<T>::SegmentTree(NVector size, T (*f)(T,T), T zero_element):dim(size.dim), operation(f), SIZE(real_size(size)),data(2*SIZE), zero(zero_element){
-    data.initialize(zero);
+template<typename T> SegmentTree<T>::SegmentTree(   NVector size,
+                                                    T (*f)(T,T),
+                                                    T zero_element,
+                                                    bool sparse):
+    dim(size.dim),
+    operation(f),
+    SIZE(real_size(size)),
+    zero(zero_element){
+
+    if(!sparse)
+        data=new DenseNArray<T>(2*SIZE,zero_element);
+    else
+        data=new SparseNArray<T>(2*SIZE,zero_element);
 }
 
 template<typename T> NVector SegmentTree<T>::real_size(NVector initial_size){
@@ -43,7 +54,7 @@ template<typename T> NVector SegmentTree<T>::real_size(NVector initial_size){
 
 template<typename T> void SegmentTree<T>::update(NVector position, T val){
     NVector pos=position+SIZE;
-    data[pos]=val;
+    (*data)[pos]=val;
     update_dim(pos,0);
 }
 
@@ -58,7 +69,7 @@ template<typename T> void SegmentTree<T>::update_dim(NVector pos, int level){
 
         l[level]=2*l[level];
         r[level]=2*r[level]+1;
-        data[pos]=operation(data[l],data[r]);
+        (*data)[pos]=operation((*data)[l],(*data)[r]);
 
         if(level<dim-1)
             update_dim(pos,level+1);
@@ -79,19 +90,19 @@ template<typename T> T SegmentTree<T>::get_dim(NVector left, NVector right, int 
     if(level==dim-1){
         while(left[level]<=right[level]){
             if(left[level]%2==1){
-                ret=operation(ret,data[left]);
+                ret=operation(ret,(*data)[left]);
                 left[level]++;
             }
 
             if(right[level]%2==0){
-                ret=operation(ret,data[right]);
+                ret=operation(ret,(*data)[right]);
                 right[level]--;
             }
 
             right[level]/=2;
             left[level]/=2;
             if(right[level]==left[level])
-                return operation(ret,data[left]);
+                return operation(ret,(*data)[left]);
         }
         return ret;
     }

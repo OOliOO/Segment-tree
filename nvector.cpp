@@ -31,3 +31,8 @@ NVector operator +(NVector a, NVector b){
         ret[i]+=b[i];
     return ret;
 }
+
+void NVector::operator=(NVector b){
+    delete[] memory;
+
+}
